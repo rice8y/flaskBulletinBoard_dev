@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import os
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder='../templates')
 
 db_url = os.environ.get("FIXED_DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
