@@ -4,10 +4,9 @@ from datetime import datetime, timedelta
 import os
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 # データベース接続設定 - 環境変数から読み込む
-# Vercelではプロジェクト設定で環境変数を設定する必要があります
 db_url = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -33,10 +32,12 @@ def create_tables():
         db.create_all()
 
 # アプリケーション開始時にテーブル作成を確認
-try:
-    create_tables()
-except Exception as e:
-    print(f"テーブル作成エラー: {str(e)}")
+@app.before_first_request
+def setup():
+    try:
+        create_tables()
+    except Exception as e:
+        print(f"テーブル作成エラー: {str(e)}")
 
 @app.route('/', methods=['GET'])
 def index():
@@ -55,6 +56,6 @@ def add_post():
         db.session.commit()
     return redirect(url_for('index'))
 
-# Vercel用のハンドラ関数
-def handler(event, context):
-    return app
+# Vercelのデプロイ対応
+if __name__ == '__main__':
+    app.run(debug=True)
