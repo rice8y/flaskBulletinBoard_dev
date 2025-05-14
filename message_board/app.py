@@ -7,7 +7,8 @@ import os
 app = Flask(__name__, template_folder='templates')
 
 # データベース接続設定 - 環境変数から読み込む
-db_url = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require")
+# db_url = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require")
+db_url = "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
