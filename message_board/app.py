@@ -1,15 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
-# Initialize Flask app with explicit template folder
-app = Flask(__name__, 
-           template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates')))
+# Initialize Flask app
+app = Flask(__name__)
 
-# Set connection string from Vercel's dashboard
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-# Initialize SQLAlchemy
+# データベース接続設定 - 環境変数から読み込む
+# Vercelではプロジェクト設定で環境変数を設定する必要があります
+db_url = os.environ.get("DATABASE_URL", "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require")
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # 掲示板の投稿モデルを定義
@@ -20,12 +21,21 @@ class Post(db.Model):
     
     def __repr__(self):
         return f'<Post {self.id}>'
+    
+    def formatted_date(self):
+        # UTC時間から日本時間(UTC+9)に変換
+        jst_time = self.created_at + timedelta(hours=9)
+        return jst_time.strftime('%Y-%m-%d %H:%M:%S')
 
-# Create database tables in the PostgreSQL database
-with app.app_context():
-    db.create_all()
+# データベーステーブルの作成
+def create_tables():
+    with app.app_context():
+        db.create_all()
 
-@app.route('/')
+# アプリケーション開始時にテーブル作成を確認
+create_tables()
+
+@app.route('/', methods=['GET'])
 def index():
     # データベースから全ての投稿を取得（最新順）
     posts = Post.query.order_by(Post.created_at.desc()).all()
@@ -42,5 +52,11 @@ def add_post():
         db.session.commit()
     return redirect(url_for('index'))
 
+# Vercelのサーバーレス環境用ハンドラ
+@app.route('/<path:path>')
+def catch_all(path):
+    return app.send_static_file(path) if os.path.exists(f"static/{path}") else redirect('/')
+
+# ローカル開発用
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
