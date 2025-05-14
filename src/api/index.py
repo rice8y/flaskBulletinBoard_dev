@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__, template_folder='templates')
 
-db_url = os.environ.get("DATABASE_URL")
+db_url = os.environ.get("FIXED_DATABASE_URL")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
