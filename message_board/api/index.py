@@ -55,15 +55,6 @@ def add_post():
         db.session.commit()
     return redirect(url_for('index'))
 
-# Vercelのサーバーレス環境用ハンドラ
-@app.route('/<path:path>')
-def catch_all(path):
-    return app.send_static_file(path) if os.path.exists(f"static/{path}") else redirect('/')
-
-# Vercel Functions用のエントリーポイント
+# Vercel用のハンドラ関数
 def handler(event, context):
-    return app(event, context)
-
-# ローカル開発用
-if __name__ == '__main__':
-    app.run(debug=True)
+    return app
