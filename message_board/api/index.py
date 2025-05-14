@@ -32,7 +32,7 @@ def create_tables():
         db.create_all()
 
 # アプリケーション開始時にテーブル作成を確認
-@app.before_first_request
+@app.before_request
 def setup():
     try:
         create_tables()
