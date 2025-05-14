@@ -1,33 +1,42 @@
-from flask import Flask, render_template, request, redirect
-import psycopg2
-import os
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
+# Initialize Flask app and set connection string from Vercel's dashboard
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
 
-# PostgreSQL接続設定（環境変数から取得）
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# 掲示板の投稿モデルを定義
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Post {self.id}>'
 
-def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+# Create database tables in the PostgreSQL database
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def index():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM posts ORDER BY id DESC')
-    posts = cur.fetchall()
-    cur.close()
-    conn.close()
+    # データベースから全ての投稿を取得（最新順）
+    posts = Post.query.order_by(Post.created_at.desc()).all()
     return render_template('index.html', posts=posts)
 
 @app.route('/add', methods=['POST'])
 def add_post():
-    content = request.form['content']
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('INSERT INTO posts (content) VALUES (%s)', (content,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return redirect('/')
+    # フォームから内容を取得
+    content = request.form.get('content')
+    if content:
+        # 新しい投稿をデータベースに追加
+        new_post = Post(content=content)
+        db.session.add(new_post)
+        db.session.commit()
+    return redirect(url_for('index'))
+
+if __name__ == '__main__':
+    app.run(debug=False)

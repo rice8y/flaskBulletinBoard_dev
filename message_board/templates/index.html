@@ -1,35 +1,82 @@
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-import os
-
-app = Flask(__name__)
-
-# PostgreSQL 接続（環境変数から URL を取得）
-DATABASE_URL = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app)
-
-# モデル定義
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
-    content = db.Column(db.String(200))
-
-# 投稿作成
-@app.route("/post", methods=["POST"])
-def create_post():
-    data = request.json
-    new_post = Post(name=data["name"], content=data["content"])
-    db.session.add(new_post)
-    db.session.commit()
-    return jsonify({"message": "Post created"}), 201
-
-# 投稿一覧取得
-@app.route("/posts", methods=["GET"])
-def get_posts():
-    posts = Post.query.all()
-    return jsonify([
-        {"id": p.id, "name": p.name, "content": p.content} for p in posts
-    ])
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>掲示板</title>
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .post-form {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .posts {
+            list-style-type: none;
+            padding: 0;
+        }
+        .post {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .post-date {
+            font-size: 0.8em;
+            color: #777;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <h1>掲示板</h1>
+    
+    <div class="post-form">
+        <form method="POST" action="/add">
+            <textarea name="content" placeholder="メッセージを入力してください"></textarea>
+            <button type="submit">投稿</button>
+        </form>
+    </div>
+    
+    <ul class="posts">
+    {% for post in posts %}
+        <li class="post">
+            <div class="post-content">{{ post.content }}</div>
+            <div class="post-date">{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+        </li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
