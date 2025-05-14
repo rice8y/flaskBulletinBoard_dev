@@ -1,9 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import os
 
-# Initialize Flask app and set connection string from Vercel's dashboard
-app = Flask(__name__)
+# Initialize Flask app with explicit template folder
+app = Flask(__name__, 
+           template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates')))
+
+# Set connection string from Vercel's dashboard
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://neondb_owner:npg_qWge0kfXZV7U@ep-morning-bonus-a1izqnc2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 # Initialize SQLAlchemy
 db = SQLAlchemy(app)
